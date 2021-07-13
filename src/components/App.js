@@ -89,7 +89,7 @@ class App extends React.Component {
       ),
     });
     let myModal = new Modal(document.getElementById('exampleModal'), {});
-    if (this.state.valuesMatched[5].includes('Not Checked Out') === false) {
+    if (this.state.valuesMatched[4].includes('Not Checked In')) {
       myModal.show();
     }
   };
@@ -118,14 +118,41 @@ class App extends React.Component {
       console.log('Welcome CheckIn');
       if (this.state.valuesMatched[4].includes('Not Checked In') === false) {
         this.setState({ checkedIn: true });
+        this.setState({
+          modalBody: (
+            <div>
+              <h1>You already Checked In</h1>
+            </div>
+          ),
+        });
+        let myModal = new Modal(document.getElementById('exampleModal'), {});
+        myModal.show();
         return;
       } else {
         await executeValuesAppendCheckIn(checkInOut, this.state.valuesMatched);
+        this.setState({
+          modalBody: (
+            <div>
+              <h1>Checked In Successfully</h1>
+            </div>
+          ),
+        });
+        let myModal = new Modal(document.getElementById('exampleModal'), {});
+        myModal.show();
       }
     } else {
       console.log('Welcome CheckOut');
       if (this.state.valuesMatched[5].includes('Check Out')) {
         this.setState({ checkedOut: true });
+        this.setState({
+          modalBody: (
+            <div>
+              <h1>You already Checked Out</h1>
+            </div>
+          ),
+        });
+        let myModal = new Modal(document.getElementById('exampleModal'), {});
+        myModal.show();
         return;
       } else if (this.state.valuesMatched[5].includes('Not Checked In')) {
         this.setState({
@@ -235,8 +262,6 @@ class App extends React.Component {
             <CheckInOut onSubmit={this.onCheckInOutSubmit} />
           )}
         </div>
-        <div>{this.state.checkedIn ? 'You already checked in' : ''}</div>
-        <div>{this.state.checkedOut ? 'You already checked out' : ''}</div>
         <MyModal body={this.state.modalBody} />
         <footer>
           {this.state.firstLoad === false ? (
