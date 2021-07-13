@@ -88,13 +88,13 @@ export const executeValuesAppendCheckIn = (checkInOut, valuesMatched) => {
     .append({
       spreadsheetId: SHEET_ID,
       range: 'Data!A2',
-      valueInputOption: 'RAW',
+      valueInputOption: 'USER_ENTERED',
       resource: {
         majorDimension: 'COLUMNS',
         values: [
           [new Date().toLocaleTimeString()],
           [checkInOut],
-          [valuesMatched[0]],
+          [`'${valuesMatched[0]}`],
           [valuesMatched[1]],
           [valuesMatched[2]],
           [valuesMatched[3]],
