@@ -14,8 +14,11 @@ import NewUserForm from './NewUserForm';
 import CountDownTimer from './CountDownTimer';
 import CheckInOut from './CheckInOut';
 import LoadingSpinner from './LoadingSpinner';
+import MyModal from './MyModal';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min';
 import '../styles.css';
+import { Modal } from 'bootstrap';
 
 const SHEET_ID = process.env.REACT_APP_SHEET_ID;
 const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
@@ -33,6 +36,7 @@ class App extends React.Component {
     checkedIn: false,
     checkedOut: false,
     loading: false,
+    modalBody: '',
   };
 
   getNewSheetId = async () => {
@@ -48,6 +52,17 @@ class App extends React.Component {
   };
 
   onSearchSubmit = async (term) => {
+    this.setState({
+      numberExists: '',
+      firstLoad: false,
+      valuesMatched: [],
+      checkInOut: '',
+      duration: '',
+      newSheetId: 0,
+      checkedIn: false,
+      checkedOut: false,
+      modalBody: '',
+    });
     this.setState({ loading: true });
     if (this.state.firstLoad) {
       await authenticate();
@@ -60,6 +75,23 @@ class App extends React.Component {
       await this.getSheetValuesMatched();
     }
     this.setState({ loading: false });
+    this.setState({
+      modalBody: (
+        <div className='text-center'>
+          {this.state.numberExists.includes('Exists') ? (
+            <h1>Welcome Back {this.state.valuesMatched[1]}</h1>
+          ) : (
+            <div className='text-center'>
+              <p>{this.state.numberExists}</p>
+            </div>
+          )}
+        </div>
+      ),
+    });
+    let myModal = new Modal(document.getElementById('exampleModal'), {});
+    if (this.state.valuesMatched[5].includes('Not Checked Out') === false) {
+      myModal.show();
+    }
   };
 
   onNewUserFormSubmit = async (userData) => {
@@ -70,6 +102,15 @@ class App extends React.Component {
     }
     await loadClient();
     await executeValuesAppend(userData);
+    // this.setState({
+    //   modalBody: (
+    //     <div className='text-center'>
+    //       <h1>Form Submitted</h1>
+    //     </div>
+    //   ),
+    // });
+    // let myModal = new Modal(document.getElementById('exampleModal'), {});
+    // myModal.show();
   };
 
   onCheckInOutSubmit = async (checkInOut) => {
@@ -86,12 +127,36 @@ class App extends React.Component {
       if (this.state.valuesMatched[5].includes('Check Out')) {
         this.setState({ checkedOut: true });
         return;
+      } else if (this.state.valuesMatched[5].includes('Not Checked In')) {
+        this.setState({
+          modalBody: (
+            <div>
+              <h1>{this.state.valuesMatched[5]}</h1>
+            </div>
+          ),
+        });
+        let myModal = new Modal(document.getElementById('exampleModal'), {});
+        myModal.show();
+        return;
       } else {
         await executeValuesAppendCheckOut(
           checkInOut,
           this.state.valuesMatched[4]
         );
         await this.getSheetValuesDuration();
+        this.setState({
+          modalBody: (
+            <div>
+              {this.state.duration.includes('') === false ? (
+                <h1>Duration {this.state.duration}</h1>
+              ) : (
+                ''
+              )}
+            </div>
+          ),
+        });
+        let myModal = new Modal(document.getElementById('exampleModal'), {});
+        myModal.show();
       }
     }
   };
@@ -159,18 +224,8 @@ class App extends React.Component {
   render() {
     return (
       <div className='ui container' style={{ marginTop: '10px' }}>
-        <div>
-          {this.state.numberExists.includes('Exists') ? (
-            <h1>Welcome Back {this.state.valuesMatched[1]}</h1>
-          ) : (
-            ''
-          )}
-        </div>
         <SearchBar onSubmit={this.onSearchSubmit} />
         {this.state.loading ? <LoadingSpinner /> : ''}
-        <div className='text-center'>
-          <p>{this.state.numberExists}</p>
-        </div>
         <div>
           {this.state.numberExists.includes('') ? (
             ''
@@ -182,13 +237,7 @@ class App extends React.Component {
         </div>
         <div>{this.state.checkedIn ? 'You already checked in' : ''}</div>
         <div>{this.state.checkedOut ? 'You already checked out' : ''}</div>
-        <div>
-          {this.state.duration.includes('') === false ? (
-            <h1>Duration {this.state.duration}</h1>
-          ) : (
-            ''
-          )}
-        </div>
+        <MyModal body={this.state.modalBody} />
         <footer>
           {this.state.firstLoad === false ? (
             <CountDownTimer hoursMinSecs={hoursMinSecs} />
