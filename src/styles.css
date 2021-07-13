@@ -9,6 +9,18 @@ footer {
   background: #3adb6b;
 }
 
+.btn-stabraq {
+  background-color: #3adb6b;
+}
+
+.btn {
+  color: white;
+}
+
 .text-stabraq {
   color: #3adb6b !important;
+}
+
+#exampleModal .modal-body{
+  background-color: #3adb6b;
 }
