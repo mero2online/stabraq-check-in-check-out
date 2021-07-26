@@ -37,12 +37,19 @@ class App extends React.Component {
     checkedOut: false,
     loading: false,
     modalBody: '',
+    modalCloseAction: '',
+    sheetDate: '',
+    showNewUserForm: false,
+    showSearchBar: false,
+    showCheckInOut: false,
   };
 
   getNewSheetId = async () => {
-    await authenticate();
-    await loadClient();
-    const newSheetId = await executeBatchUpdateAddSheet();
+    // await authenticate();
+    // await loadClient();
+    const newSheetId = await executeBatchUpdateAddSheet(
+      this.state.sheetDate[0]
+    );
     if (newSheetId === false) return;
     this.setState({
       newSheetId: newSheetId,
@@ -75,6 +82,24 @@ class App extends React.Component {
       await this.getSheetValuesMatched();
     }
     this.setState({ loading: false });
+
+    this.state.numberExists.includes('')
+      ? this.setState({
+          showNewUserForm: false,
+          showSearchBar: false,
+          showCheckInOut: false,
+        })
+      : this.state.numberExists.includes('Not Exists')
+      ? this.setState({
+          showNewUserForm: true,
+          showSearchBar: false,
+          showCheckInOut: false,
+        })
+      : this.setState({
+          showNewUserForm: false,
+          showCheckInOut: true,
+        });
+
     this.setState({
       modalBody: (
         <div className='text-center'>
@@ -117,7 +142,26 @@ class App extends React.Component {
     myModal.show();
   };
 
+  checkDateToAddSheet = async (dataDateOne, dataDateTwo) => {
+    const dateOne = new Date(dataDateOne);
+    const dateTwo = new Date(dataDateTwo);
+    const diffTime = Math.abs(dateTwo - dateOne);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays;
+  };
+
   onCheckInOutSubmit = async (checkInOut) => {
+    await this.getSheetValuesSheetDate();
+
+    const dateOne = this.state.sheetDate;
+    const dateTwo = new Date().toLocaleDateString();
+    const diff = await this.checkDateToAddSheet(dateOne, dateTwo);
+
+    if (diff >= 1) {
+      await this.getNewSheetId();
+    }
+
     if (checkInOut.includes('Check In')) {
       console.log('Welcome CheckIn');
       if (this.state.valuesMatched[4].includes('Not Checked In') === false) {
@@ -128,6 +172,7 @@ class App extends React.Component {
               <h1>You already Checked In</h1>
             </div>
           ),
+          modalCloseAction: 'refresh',
         });
         let myModal = new Modal(document.getElementById('exampleModal'), {});
         myModal.show();
@@ -140,6 +185,7 @@ class App extends React.Component {
               <h1>Checked In Successfully</h1>
             </div>
           ),
+          modalCloseAction: 'refresh',
         });
         let myModal = new Modal(document.getElementById('exampleModal'), {});
         myModal.show();
@@ -154,6 +200,7 @@ class App extends React.Component {
               <h1>You already Checked Out</h1>
             </div>
           ),
+          modalCloseAction: 'refresh',
         });
         let myModal = new Modal(document.getElementById('exampleModal'), {});
         myModal.show();
@@ -165,6 +212,7 @@ class App extends React.Component {
               <h1>{this.state.valuesMatched[5]}</h1>
             </div>
           ),
+          modalCloseAction: 'refresh',
         });
         let myModal = new Modal(document.getElementById('exampleModal'), {});
         myModal.show();
@@ -185,6 +233,7 @@ class App extends React.Component {
               )}
             </div>
           ),
+          modalCloseAction: 'refresh',
         });
         let myModal = new Modal(document.getElementById('exampleModal'), {});
         myModal.show();
@@ -252,29 +301,94 @@ class App extends React.Component {
     }
   };
 
+  getSheetValuesSheetDate = async () => {
+    try {
+      const response = await window.gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SHEET_ID,
+        range: 'Data!J1',
+      });
+      // Handle the results here (response.result has the parsed body).
+      console.log('Response', response.result.values[0]);
+      this.setState({ sheetDate: response.result.values[0] });
+    } catch (err) {
+      console.error('Execute error', err);
+    }
+  };
+
   render() {
     return (
-      <div className='ui container' style={{ marginTop: '10px' }}>
-        <SearchBar onSubmit={this.onSearchSubmit} />
-        {this.state.loading ? <LoadingSpinner /> : ''}
-        <div>
-          {this.state.numberExists.includes('') ? (
-            ''
-          ) : this.state.numberExists.includes('Not Exists') ? (
-            <NewUserForm onSubmit={this.onNewUserFormSubmit} />
-          ) : (
-            <CheckInOut onSubmit={this.onCheckInOutSubmit} />
-          )}
+      <div className='ui container mt-3'>
+        <img
+          className='mx-auto d-block'
+          src='logo.png'
+          alt='Logo'
+          width='100'
+          height='100'
+        />
+        <div className='ui container mt-3'>
+          <nav className='navbar navbar-light bg-dark'>
+            <form className='container-fluid justify-content-center'>
+              <button
+                className='btn btn-outline-success me-2'
+                type='button'
+                onClick={() =>
+                  this.setState({
+                    showSearchBar: !this.state.showSearchBar,
+                    showNewUserForm: false,
+                  })
+                }
+              >
+                User
+              </button>
+              <button
+                className='btn btn-outline-success me-2'
+                type='button'
+                onClick={() =>
+                  this.setState({
+                    showNewUserForm: !this.state.showNewUserForm,
+                    showSearchBar: false,
+                    showCheckInOut: false,
+                  })
+                }
+              >
+                New User
+              </button>
+            </form>
+          </nav>
         </div>
-        <MyModal body={this.state.modalBody} />
-        <footer className='container'>
+
+        {this.state.showSearchBar ? (
+          <SearchBar onSubmit={this.onSearchSubmit} />
+        ) : (
+          ''
+        )}
+
+        {this.state.showNewUserForm ? (
+          <NewUserForm onSubmit={this.onNewUserFormSubmit} />
+        ) : (
+          ''
+        )}
+
+        {this.state.loading ? <LoadingSpinner /> : ''}
+
+        {this.state.showCheckInOut ? (
+          <CheckInOut onSubmit={this.onCheckInOutSubmit} />
+        ) : (
+          ''
+        )}
+
+        <MyModal
+          body={this.state.modalBody}
+          closeAction={this.state.modalCloseAction}
+        />
+        <div className='container'>
           {this.state.firstLoad === false ? (
             <CountDownTimer hoursMinSecs={hoursMinSecs} />
           ) : (
             ''
           )}
-          <button onClick={this.getNewSheetId}>AddSheet</button>
-        </footer>
+          {/* <button onClick={this.getNewSheetId}>AddSheet</button> */}
+        </div>
       </div>
     );
   }
