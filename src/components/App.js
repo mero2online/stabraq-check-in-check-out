@@ -89,7 +89,11 @@ class App extends React.Component {
       ),
     });
     let myModal = new Modal(document.getElementById('exampleModal'), {});
-    if (this.state.valuesMatched[4].includes('Not Checked In')) {
+    if (
+      (this.state.numberExists.includes('Exists') &&
+        this.state.valuesMatched[4].includes('Not Checked In')) ||
+      this.state.numberExists.includes('Not Exists')
+    ) {
       myModal.show();
     }
   };
@@ -102,15 +106,15 @@ class App extends React.Component {
     }
     await loadClient();
     await executeValuesAppend(userData);
-    // this.setState({
-    //   modalBody: (
-    //     <div className='text-center'>
-    //       <h1>Form Submitted</h1>
-    //     </div>
-    //   ),
-    // });
-    // let myModal = new Modal(document.getElementById('exampleModal'), {});
-    // myModal.show();
+    this.setState({
+      modalBody: (
+        <div className='text-center'>
+          <h1>Form Submitted</h1>
+        </div>
+      ),
+    });
+    let myModal = new Modal(document.getElementById('exampleModal'), {});
+    myModal.show();
   };
 
   onCheckInOutSubmit = async (checkInOut) => {
@@ -210,7 +214,7 @@ class App extends React.Component {
     try {
       const response = await window.gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: 'Clients!F2',
+        range: 'Clients!I2',
       });
       // Handle the results here (response.result has the parsed body).
       console.log('Response', response.result.values[0]);
@@ -224,7 +228,7 @@ class App extends React.Component {
     try {
       const response = await window.gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: 'Clients!G2:L2',
+        range: 'Clients!J2:O2',
       });
       // Handle the results here (response.result has the parsed body).
       console.log('Response', response.result.values[0]);
@@ -263,7 +267,7 @@ class App extends React.Component {
           )}
         </div>
         <MyModal body={this.state.modalBody} />
-        <footer>
+        <footer className='container'>
           {this.state.firstLoad === false ? (
             <CountDownTimer hoursMinSecs={hoursMinSecs} />
           ) : (

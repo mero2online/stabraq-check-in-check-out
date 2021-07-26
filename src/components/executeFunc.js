@@ -4,7 +4,7 @@ export const executeValuesUpdate = (val) => {
   return window.gapi.client.sheets.spreadsheets.values
     .update({
       spreadsheetId: SHEET_ID,
-      range: 'Clients!E2',
+      range: 'Clients!H2',
       valueInputOption: 'USER_ENTERED',
       resource: {
         // majorDimension: 'COLUMNS',
@@ -148,6 +148,7 @@ export const executeBatchUpdateAddSheet = async () => {
             addSheet: {
               properties: {
                 title: new Date().toLocaleDateString(),
+                rightToLeft: true,
               },
             },
           },
