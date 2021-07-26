@@ -138,7 +138,7 @@ export const executeValuesAppendCheckOut = (checkInOut, rowNumber) => {
     );
 };
 
-export const executeBatchUpdateAddSheet = async () => {
+export const executeBatchUpdateAddSheet = async (sheetDate) => {
   try {
     const response = await window.gapi.client.sheets.spreadsheets.batchUpdate({
       spreadsheetId: SHEET_ID,
@@ -147,7 +147,7 @@ export const executeBatchUpdateAddSheet = async () => {
           {
             addSheet: {
               properties: {
-                title: new Date().toLocaleDateString(),
+                title: sheetDate,
                 rightToLeft: true,
               },
             },
@@ -171,8 +171,8 @@ export const executeValuesAppendAddSheet = async () => {
     const response = await window.gapi.client.sheets.spreadsheets.values.append(
       {
         spreadsheetId: SHEET_ID,
-        range: 'Copy of Data!A1',
-        valueInputOption: 'RAW',
+        range: 'Data!A1',
+        valueInputOption: 'USER_ENTERED',
         resource: {
           majorDimension: 'COLUMNS',
           values: [
@@ -185,6 +185,7 @@ export const executeValuesAppendAddSheet = async () => {
             ['Timestamp CheckOut'],
             ['Check Out'],
             ['Duration'],
+            [new Date().toLocaleDateString()],
           ],
         },
       }

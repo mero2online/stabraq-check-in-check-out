@@ -34,7 +34,7 @@ class SearchBar extends React.Component {
                 Enter valid mobile number
               </div>
             )}
-            <div>
+            <div className='mt-3'>
               <button
                 className='ui primary button stabraq-bg'
                 onClick={this.onFormSubmit}
