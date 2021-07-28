@@ -29,3 +29,16 @@ footer {
 .freebirdLightBackground {
   background-color: rgb(210, 235, 211);
 }
+
+.user-img {
+  width: 230px;
+  height: 250px;
+  filter: invert(71%) sepia(69%) saturate(468%) hue-rotate(79deg)
+    brightness(90%) contrast(93%);
+}
+
+.shrink {
+  width: 70px;
+  height: 80px;
+  transition: 0.5s ease;
+}
