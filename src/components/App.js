@@ -32,6 +32,8 @@ class App extends React.Component {
     valuesMatched: [],
     checkInOut: '',
     duration: '',
+    approxDuration: '',
+    cost: '',
     newSheetId: 0,
     checkedIn: false,
     checkedOut: false,
@@ -42,8 +44,10 @@ class App extends React.Component {
     showNewUserForm: false,
     showSearchBar: false,
     showCheckInOut: false,
+    shrink: false,
   };
 
+  // Function to Add new Sheet for new day
   getNewSheetId = async () => {
     // await authenticate();
     // await loadClient();
@@ -59,6 +63,7 @@ class App extends React.Component {
   };
 
   onSearchSubmit = async (term) => {
+    // Reset State
     this.setState({
       numberExists: '',
       firstLoad: false,
@@ -70,19 +75,39 @@ class App extends React.Component {
       checkedOut: false,
       modalBody: '',
     });
+
+    // Show LoadingSpinner
     this.setState({ loading: true });
+
+    // Authenticate
     if (this.state.firstLoad) {
       await authenticate();
       this.setState({ firstLoad: false });
     }
     await loadClient();
+
+    // Check to Add new Sheet for new day
+    await this.getSheetValuesSheetDate();
+
+    const dateOne = this.state.sheetDate;
+    const dateTwo = new Date().toLocaleDateString();
+    const diff = await this.checkDateToAddSheet(dateOne, dateTwo);
+
+    if (diff >= 1) {
+      await this.getNewSheetId();
+    }
+
+    // Search for the user by mobile number
     await executeValuesUpdate(term);
     await this.getSheetValues();
     if (this.state.numberExists.includes('Exists')) {
       await this.getSheetValuesMatched();
     }
+
+    // Hide LoadingSpinner
     this.setState({ loading: false });
 
+    // Toggle between showNewUserForm & showSearchBar & showCheckInOut
     this.state.numberExists.includes('')
       ? this.setState({
           showNewUserForm: false,
@@ -100,6 +125,7 @@ class App extends React.Component {
           showCheckInOut: true,
         });
 
+    // Show Modal
     this.setState({
       modalBody: (
         <div className='text-center'>
@@ -116,7 +142,7 @@ class App extends React.Component {
     let myModal = new Modal(document.getElementById('exampleModal'), {});
     if (
       (this.state.numberExists.includes('Exists') &&
-        this.state.valuesMatched[4].includes('Not Checked In')) ||
+        this.state.valuesMatched[6].includes('Not Checked In')) ||
       this.state.numberExists.includes('Not Exists')
     ) {
       myModal.show();
@@ -152,19 +178,9 @@ class App extends React.Component {
   };
 
   onCheckInOutSubmit = async (checkInOut) => {
-    await this.getSheetValuesSheetDate();
-
-    const dateOne = this.state.sheetDate;
-    const dateTwo = new Date().toLocaleDateString();
-    const diff = await this.checkDateToAddSheet(dateOne, dateTwo);
-
-    if (diff >= 1) {
-      await this.getNewSheetId();
-    }
-
     if (checkInOut.includes('Check In')) {
       console.log('Welcome CheckIn');
-      if (this.state.valuesMatched[4].includes('Not Checked In') === false) {
+      if (this.state.valuesMatched[6].includes('Not Checked In') === false) {
         this.setState({ checkedIn: true });
         this.setState({
           modalBody: (
@@ -183,6 +199,14 @@ class App extends React.Component {
           modalBody: (
             <div>
               <h1>Checked In Successfully</h1>
+              {this.state.valuesMatched[3].includes('Not Member') === false ? (
+                <div>
+                  <h1>Expiry Date {this.state.valuesMatched[4]}</h1>
+                  <h1>Remain Days {this.state.valuesMatched[5]}</h1>
+                </div>
+              ) : (
+                ''
+              )}
             </div>
           ),
           modalCloseAction: 'refresh',
@@ -192,7 +216,7 @@ class App extends React.Component {
       }
     } else {
       console.log('Welcome CheckOut');
-      if (this.state.valuesMatched[5].includes('Check Out')) {
+      if (this.state.valuesMatched[7].includes('Check Out')) {
         this.setState({ checkedOut: true });
         this.setState({
           modalBody: (
@@ -205,11 +229,11 @@ class App extends React.Component {
         let myModal = new Modal(document.getElementById('exampleModal'), {});
         myModal.show();
         return;
-      } else if (this.state.valuesMatched[5].includes('Not Checked In')) {
+      } else if (this.state.valuesMatched[7].includes('Not Checked In')) {
         this.setState({
           modalBody: (
             <div>
-              <h1>{this.state.valuesMatched[5]}</h1>
+              <h1>{this.state.valuesMatched[7]}</h1>
             </div>
           ),
           modalCloseAction: 'refresh',
@@ -220,14 +244,22 @@ class App extends React.Component {
       } else {
         await executeValuesAppendCheckOut(
           checkInOut,
-          this.state.valuesMatched[4]
+          this.state.valuesMatched[6]
         );
         await this.getSheetValuesDuration();
         this.setState({
           modalBody: (
             <div>
-              {this.state.duration.includes('') === false ? (
-                <h1>Duration {this.state.duration}</h1>
+              {this.state.duration.includes('') ? (
+                <div>
+                  <h1>Duration: {this.state.duration}</h1>
+                  <h1>Approx. Duration: {this.state.approxDuration}</h1>
+                  {this.state.valuesMatched[3].includes('Not Member') ? (
+                    <h1>Cost: {this.state.cost} EGP</h1>
+                  ) : (
+                    ''
+                  )}
+                </div>
               ) : (
                 ''
               )}
@@ -277,7 +309,7 @@ class App extends React.Component {
     try {
       const response = await window.gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: 'Clients!J2:O2',
+        range: 'Clients!J2:Q2',
       });
       // Handle the results here (response.result has the parsed body).
       console.log('Response', response.result.values[0]);
@@ -291,11 +323,16 @@ class App extends React.Component {
     try {
       const response = await window.gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: `Data!I${this.state.valuesMatched[4]}`,
+        range: `Data!I${this.state.valuesMatched[6]}:K${this.state.valuesMatched[6]}`,
       });
       // Handle the results here (response.result has the parsed body).
+      const data = await response.result.values[0];
       console.log('Response', response.result.values[0]);
-      this.setState({ duration: response.result.values[0] });
+      this.setState({
+        duration: data[0],
+        approxDuration: data[1],
+        cost: data[2],
+      });
     } catch (err) {
       console.error('Execute error', err);
     }
@@ -316,6 +353,7 @@ class App extends React.Component {
   };
 
   render() {
+    const shrink = this.state.shrink ? 'shrink' : '';
     return (
       <div className='ui container mt-3'>
         <img
@@ -325,32 +363,44 @@ class App extends React.Component {
           width='100'
           height='100'
         />
-        <div className='ui container mt-3'>
-          <nav className='navbar navbar-light bg-dark'>
+        <div className='row ui container mt-3'>
+          <nav className='navbar navbar-light'>
             <form className='container-fluid justify-content-center'>
               <button
-                className='btn btn-outline-success me-2'
+                className='btn btn-outline-success me-2 bg-dark'
                 type='button'
                 onClick={() =>
                   this.setState({
                     showSearchBar: !this.state.showSearchBar,
                     showNewUserForm: false,
+                    shrink: true,
                   })
                 }
               >
+                <img
+                  className={`mx-auto d-block user-img ${shrink}`}
+                  src='user-member.png'
+                  alt='user-member'
+                />
                 User
               </button>
               <button
-                className='btn btn-outline-success me-2'
+                className='btn btn-outline-success me-2 bg-dark'
                 type='button'
                 onClick={() =>
                   this.setState({
                     showNewUserForm: !this.state.showNewUserForm,
                     showSearchBar: false,
                     showCheckInOut: false,
+                    shrink: true,
                   })
                 }
               >
+                <img
+                  className={`mx-auto d-block user-img ${shrink}`}
+                  src='user-new-user.png'
+                  alt='user-new-user'
+                />
                 New User
               </button>
             </form>

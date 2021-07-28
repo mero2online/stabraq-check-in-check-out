@@ -124,6 +124,10 @@ export const executeValuesAppendCheckOut = (checkInOut, rowNumber) => {
           [new Date().toLocaleTimeString()],
           [checkInOut],
           [`=TEXT(G${rowNumber}-A${rowNumber},"h:mm")`],
+          [
+            `=IF(I${rowNumber}*24<1,1,IF(OR(AND(I${rowNumber}*24-INT(I${rowNumber}*24)<=0.1),AND(I${rowNumber}*24-INT(I${rowNumber}*24)>0.5,I${rowNumber}*24-INT(I${rowNumber}*24)<=0.59)),FLOOR(I${rowNumber},"00:30")*24,CEILING(I${rowNumber},"00:30")*24))`,
+          ],
+          [`=J${rowNumber}*10`],
         ],
       },
     })
