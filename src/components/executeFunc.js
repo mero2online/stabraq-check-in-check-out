@@ -92,12 +92,12 @@ export const executeValuesAppendCheckIn = (checkInOut, valuesMatched) => {
       resource: {
         majorDimension: 'COLUMNS',
         values: [
-          [new Date().toLocaleTimeString()],
-          [checkInOut],
-          [`'${valuesMatched[0]}`],
           [valuesMatched[1]],
+          [`'${valuesMatched[0]}`],
           [valuesMatched[2]],
           [valuesMatched[3]],
+          [checkInOut],
+          [new Date().toLocaleTimeString()],
         ],
       },
     })
@@ -112,7 +112,11 @@ export const executeValuesAppendCheckIn = (checkInOut, valuesMatched) => {
     );
 };
 
-export const executeValuesAppendCheckOut = (checkInOut, rowNumber) => {
+export const executeValuesAppendCheckOut = (
+  checkInOut,
+  rowNumber,
+  membership
+) => {
   return window.gapi.client.sheets.spreadsheets.values
     .append({
       spreadsheetId: SHEET_ID,
@@ -122,12 +126,12 @@ export const executeValuesAppendCheckOut = (checkInOut, rowNumber) => {
         majorDimension: 'COLUMNS',
         values: [
           [new Date().toLocaleTimeString()],
-          [checkInOut],
-          [`=TEXT(G${rowNumber}-A${rowNumber},"h:mm")`],
+          [`=TEXT(G${rowNumber}-F${rowNumber},"h:mm")`],
           [
-            `=IF(I${rowNumber}*24<1,1,IF(OR(AND(I${rowNumber}*24-INT(I${rowNumber}*24)<=0.1),AND(I${rowNumber}*24-INT(I${rowNumber}*24)>0.5,I${rowNumber}*24-INT(I${rowNumber}*24)<=0.59)),FLOOR(I${rowNumber},"00:30")*24,CEILING(I${rowNumber},"00:30")*24))`,
+            `=IF(H${rowNumber}*24<1,1,IF(OR(AND(H${rowNumber}*24-INT(H${rowNumber}*24)<=0.1),AND(H${rowNumber}*24-INT(H${rowNumber}*24)>0.5,H${rowNumber}*24-INT(H${rowNumber}*24)<=0.59)),FLOOR(H${rowNumber},"00:30")*24,CEILING(H${rowNumber},"00:30")*24))`,
           ],
-          [`=J${rowNumber}*10`],
+          membership.includes('Not Member') ? [`=I${rowNumber}*10`] : [''],
+          [checkInOut],
         ],
       },
     })
@@ -180,15 +184,17 @@ export const executeValuesAppendAddSheet = async () => {
         resource: {
           majorDimension: 'COLUMNS',
           values: [
-            ['Timestamp CheckIn'],
-            ['Check In'],
-            ['Mobile No.'],
             ['Name'],
+            ['Mobile No.'],
             ['E-Mail'],
             ['Membership'],
-            ['Timestamp CheckOut'],
-            ['Check Out'],
+            ['Check In'],
+            ['CheckIn Time'],
+            ['CheckOut Time'],
             ['Duration'],
+            ['Approx. Duration'],
+            ['Cost'],
+            ['Check Out'],
             [new Date().toLocaleDateString()],
           ],
         },
