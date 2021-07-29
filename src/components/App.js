@@ -9,6 +9,7 @@ import {
   executeBatchUpdateCutPaste,
   executeValuesAppendAddSheet,
 } from './executeFunc';
+import Main from './Main';
 import SearchBar from './SearchBar';
 import NewUserForm from './NewUserForm';
 import CountDownTimer from './CountDownTimer';
@@ -45,6 +46,8 @@ class App extends React.Component {
     showSearchBar: false,
     showCheckInOut: false,
     shrink: false,
+    showMain: false,
+    shrinkLogo: false,
   };
 
   // Function to Add new Sheet for new day
@@ -60,6 +63,23 @@ class App extends React.Component {
     });
     await executeBatchUpdateCutPaste(this.state.newSheetId);
     await executeValuesAppendAddSheet();
+  };
+
+  showMainPage = async () => {
+    this.setState({
+      showMain: true,
+      shrinkLogo: true,
+    });
+  };
+
+  onUserSubmit = async (mainData) => {
+    console.log(mainData);
+    this.setState({
+      showNewUserForm: mainData.showNewUserForm,
+      showSearchBar: mainData.showSearchBar,
+      showCheckInOut: mainData.showCheckInOut,
+      shrink: mainData.shrink,
+    });
   };
 
   onSearchSubmit = async (term) => {
@@ -201,8 +221,14 @@ class App extends React.Component {
               <h1>Checked In Successfully</h1>
               {this.state.valuesMatched[3].includes('Not Member') === false ? (
                 <div>
-                  <h1>Expiry Date {this.state.valuesMatched[4]}</h1>
-                  <h1>Remain Days {this.state.valuesMatched[5]}</h1>
+                  <h1>Expiry Date: {this.state.valuesMatched[4]}</h1>
+                  <h1>
+                    Remaining Days:{' '}
+                    {this.state.valuesMatched[5].includes('-')
+                      ? `Expired ${this.state.valuesMatched[5]}`
+                      : this.state.valuesMatched[5]}{' '}
+                    Days
+                  </h1>
                 </div>
               ) : (
                 ''
@@ -244,7 +270,8 @@ class App extends React.Component {
       } else {
         await executeValuesAppendCheckOut(
           checkInOut,
-          this.state.valuesMatched[6]
+          this.state.valuesMatched[6],
+          this.state.valuesMatched[3]
         );
         await this.getSheetValuesDuration();
         this.setState({
@@ -252,8 +279,8 @@ class App extends React.Component {
             <div>
               {this.state.duration.includes('') ? (
                 <div>
-                  <h1>Duration: {this.state.duration}</h1>
-                  <h1>Approx. Duration: {this.state.approxDuration}</h1>
+                  <h1>Duration: {this.state.duration} Hr:Min</h1>
+                  <h1>Approx. Duration: {this.state.approxDuration} Hours</h1>
                   {this.state.valuesMatched[3].includes('Not Member') ? (
                     <h1>Cost: {this.state.cost} EGP</h1>
                   ) : (
@@ -323,7 +350,7 @@ class App extends React.Component {
     try {
       const response = await window.gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: `Data!I${this.state.valuesMatched[6]}:K${this.state.valuesMatched[6]}`,
+        range: `Data!H${this.state.valuesMatched[6]}:J${this.state.valuesMatched[6]}`,
       });
       // Handle the results here (response.result has the parsed body).
       const data = await response.result.values[0];
@@ -342,7 +369,7 @@ class App extends React.Component {
     try {
       const response = await window.gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: 'Data!J1',
+        range: 'Data!L1',
       });
       // Handle the results here (response.result has the parsed body).
       console.log('Response', response.result.values[0]);
@@ -353,59 +380,24 @@ class App extends React.Component {
   };
 
   render() {
-    const shrink = this.state.shrink ? 'shrink' : '';
+    const shrinkLogo = this.state.shrinkLogo ? 'shrink-logo' : '';
     return (
       <div className='ui container mt-3'>
-        <img
-          className='mx-auto d-block'
-          src='logo.png'
-          alt='Logo'
-          width='100'
-          height='100'
-        />
-        <div className='row ui container mt-3'>
-          <nav className='navbar navbar-light'>
-            <form className='container-fluid justify-content-center'>
-              <button
-                className='btn btn-outline-success me-2 bg-dark'
-                type='button'
-                onClick={() =>
-                  this.setState({
-                    showSearchBar: !this.state.showSearchBar,
-                    showNewUserForm: false,
-                    shrink: true,
-                  })
-                }
-              >
-                <img
-                  className={`mx-auto d-block user-img ${shrink}`}
-                  src='user-member.png'
-                  alt='user-member'
-                />
-                User
-              </button>
-              <button
-                className='btn btn-outline-success me-2 bg-dark'
-                type='button'
-                onClick={() =>
-                  this.setState({
-                    showNewUserForm: !this.state.showNewUserForm,
-                    showSearchBar: false,
-                    showCheckInOut: false,
-                    shrink: true,
-                  })
-                }
-              >
-                <img
-                  className={`mx-auto d-block user-img ${shrink}`}
-                  src='user-new-user.png'
-                  alt='user-new-user'
-                />
-                New User
-              </button>
-            </form>
-          </nav>
+        <div className='text-center'>
+          <button
+            className='btn me-2 no-btn-focus'
+            type='button'
+            onClick={this.showMainPage}
+          >
+            <img
+              className={`mx-auto d-block logo-img ${shrinkLogo}`}
+              src='logo.png'
+              alt='Logo'
+            />
+          </button>
         </div>
+
+        {this.state.showMain ? <Main onSubmit={this.onUserSubmit} /> : ''}
 
         {this.state.showSearchBar ? (
           <SearchBar onSubmit={this.onSearchSubmit} />
