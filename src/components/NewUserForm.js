@@ -36,7 +36,7 @@ class NewUserForm extends React.Component {
     if (this.state.validate.email === false) return;
     if (this.state.validate.userName === false) return;
     if (this.state.validate.membership === false) return;
-    
+
     this.props.onSubmit({
       userName: this.state.userName,
       mobile: this.state.mobile,
@@ -67,6 +67,7 @@ class NewUserForm extends React.Component {
             <input
               type='text'
               name='userName'
+              placeholder='يفضل باللغة العربية'
               onChange={this.myChangeHandler}
             />
             {this.state.validate.userName === null ||
@@ -81,6 +82,7 @@ class NewUserForm extends React.Component {
             <input
               type='text'
               name='mobile'
+              placeholder='01xxxxxxxxx'
               onChange={this.myChangeHandler}
               maxLength={11}
             />
@@ -93,7 +95,12 @@ class NewUserForm extends React.Component {
               </div>
             )}
             <label>E-Mail Address</label>
-            <input type='text' name='email' onChange={this.myChangeHandler} />
+            <input
+              type='text'
+              name='email'
+              placeholder='stabraq@stabraq.com'
+              onChange={this.myChangeHandler}
+            />
             {this.state.validate.email === null ||
             this.state.validate.email === true ? (
               ''
