@@ -52,8 +52,8 @@ class App extends React.Component {
 
   // Function to Add new Sheet for new day
   getNewSheetId = async () => {
-    await authenticate();
-    await loadClient();
+    // await authenticate();
+    // await loadClient();
     const newSheetId = await executeBatchUpdateAddSheet(
       this.state.sheetDate[0]
     );
